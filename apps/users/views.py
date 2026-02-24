@@ -1,108 +1,123 @@
-from datetime import datetime, timezone
+"""
+Views для аутентификации: регистрация, вход, выход, профиль.
+Все операции делегируются в AuthService — views только HTTP-слой.
+"""
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
-from .models import User, Session
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UpdateUserSerializer
-from .utils import hash_password, check_password, generate_token
+from .services import AuthService
 from apps.access.permissions import login_required
 
 
 class RegisterView(APIView):
-    """POST /api/auth/register/ — Регистрация нового пользователя."""
+    """POST /api/auth/register/ — регистрация нового пользователя."""
 
     def post(self, request):
+        """
+        Создаёт пользователя и назначает роль 'user' по умолчанию.
+
+        Body: first_name, last_name, patronymic?, email, password, password_confirm
+        Returns: 201 с данными пользователя или 400 при ошибке валидации
+        """
         serializer = RegisterSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
-        user = User.objects.create(
-            first_name=data['first_name'],
-            last_name=data['last_name'],
-            patronymic=data.get('patronymic', ''),
-            email=data['email'],
-            password_hash=hash_password(data['password']),
-        )
-
-        # Назначаем роль по умолчанию (user)
-        from apps.access.models import Role, UserRole
-        default_role = Role.objects.filter(name='user').first()
-        if default_role:
-            UserRole.objects.create(user=user, role=default_role)
-
+        user = AuthService.register(serializer.validated_data)
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
 
 class LoginView(APIView):
-    """POST /api/auth/login/ — Вход в систему, получение JWT-токена."""
+    """POST /api/auth/login/ — вход в систему, получение JWT-токена."""
 
     def post(self, request):
+        """
+        Проверяет учётные данные и возвращает JWT-токен.
+
+        Body: email, password
+        Returns: 200 с токеном и данными пользователя, 401 при неверных данных
+        """
         serializer = LoginSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        data = serializer.validated_data
-        user = User.objects.filter(email=data['email'], is_active=True).first()
-
-        if not user or not check_password(data['password'], user.password_hash):
+        result = AuthService.login(
+            email=serializer.validated_data['email'],
+            password=serializer.validated_data['password'],
+        )
+        if not result:
             return Response(
                 {'detail': 'Неверный email или пароль.'},
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_401_UNAUTHORIZED,
             )
 
-        token, expires_at = generate_token(user.id)
-        Session.objects.create(user=user, token=token, expires_at=expires_at)
-
         return Response({
-            'token': token,
-            'expires_at': expires_at.isoformat(),
-            'user': UserSerializer(user).data,
+            'token': result['token'],
+            'expires_at': result['expires_at'].isoformat(),
+            'user': UserSerializer(result['user']).data,
         })
 
 
 class LogoutView(APIView):
-    """POST /api/auth/logout/ — Выход из системы (деактивация сессии)."""
+    """POST /api/auth/logout/ — выход из системы."""
 
     @login_required
     def post(self, request):
+        """
+        Деактивирует текущую сессию по токену из заголовка.
+
+        Headers: Authorization: Bearer <token>
+        Returns: 200
+        """
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
         token = auth_header[7:] if auth_header.startswith('Bearer ') else ''
-        Session.objects.filter(token=token).update(is_active=False)
+        AuthService.logout(token)
         return Response({'detail': 'Вы успешно вышли из системы.'})
 
 
 class ProfileView(APIView):
-    """GET/PATCH /api/auth/profile/ — Просмотр и редактирование профиля."""
+    """GET/PATCH /api/auth/profile/ — просмотр и редактирование профиля."""
 
     @login_required
     def get(self, request):
+        """
+        Возвращает данные текущего пользователя.
+
+        Returns: 200 с данными профиля
+        """
         return Response(UserSerializer(request.current_user).data)
 
     @login_required
     def patch(self, request):
-        serializer = UpdateUserSerializer(data=request.data, context={'user': request.current_user})
+        """
+        Обновляет поля профиля (частичное обновление).
+
+        Body: first_name?, last_name?, patronymic?, email?
+        Returns: 200 с обновлёнными данными или 400 при ошибке валидации
+        """
+        serializer = UpdateUserSerializer(
+            data=request.data,
+            context={'user': request.current_user},
+        )
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        user = request.current_user
-        for field, value in serializer.validated_data.items():
-            setattr(user, field, value)
-        user.save()
-
+        user = AuthService.update_profile(request.current_user, serializer.validated_data)
         return Response(UserSerializer(user).data)
 
 
 class DeleteAccountView(APIView):
-    """DELETE /api/auth/profile/ — Мягкое удаление аккаунта."""
+    """DELETE /api/auth/profile/delete/ — мягкое удаление аккаунта."""
 
     @login_required
     def delete(self, request):
-        user = request.current_user
-        # Деактивируем все сессии
-        Session.objects.filter(user=user).update(is_active=False)
-        # Мягкое удаление
-        user.is_active = False
-        user.save()
+        """
+        Деактивирует аккаунт и все сессии пользователя (soft delete).
+
+        Returns: 200
+        """
+        AuthService.delete_account(request.current_user)
         return Response({'detail': 'Аккаунт деактивирован.'})
