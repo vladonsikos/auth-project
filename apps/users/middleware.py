@@ -30,7 +30,7 @@ class JWTAuthMiddleware:
                         expires_at__gt=datetime.now(timezone.utc)
                     ).select_related('user').first()
 
-                    if session and session.user.is_active:
+                    if session and session.user and session.user.is_active:
                         request.user_id = session.user.id
                         request.current_user = session.user
                 except Exception:

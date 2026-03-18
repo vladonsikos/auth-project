@@ -4,4 +4,5 @@ urlpatterns = [
     path('api/auth/', include('apps.users.urls')),
     path('api/access/', include('apps.access.urls')),
     path('api/business/', include('apps.business.urls')),
+    path('api/logs/', include('apps.users.urls_logs')),
 ]

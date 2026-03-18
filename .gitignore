@@ -1,6 +1,39 @@
+# Python
 venv/
-.env
 __pycache__/
 *.pyc
 *.pyo
-apps/*/migrations/__pycache__/
+*.pyd
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Django
+*.sqlite3
+media/
+staticfiles/
+
+# Environment — никогда не коммитить реальные .env
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Logs
+*.log
+
+# Editor
+*.swp
+*.swo
+.DS_Store
+.idea/
+.vscode/
+
+# Frontend build artifacts
+frontend/dist/
+frontend/node_modules/
+frontend/*.tsbuildinfo
+frontend/.env
+frontend/.env.local
+frontend/.env.production
+frontend/.env.*.local

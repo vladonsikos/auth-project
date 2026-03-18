@@ -115,9 +115,9 @@ class ProductDetailTests(TestCase):
     def setUp(self):
         # Владелец с правами на свои объекты
         self.user_role = create_role('user')
-        self.owner = create_user('owner@test.com', 'user')
         grant(self.user_role, 'products',
               read=True, update=True, delete=True, create=True)
+        self.owner = create_user('owner@test.com', 'user')
         self.owner_client = auth_client(self.owner)
 
         # Другой пользователь
@@ -126,9 +126,9 @@ class ProductDetailTests(TestCase):
 
         # Менеджер с правами на всё
         self.mgr_role = create_role('manager')
-        self.manager = create_user('mgr@test.com', 'manager')
         grant(self.mgr_role, 'products',
               read_all=True, update_all=True, delete_all=True)
+        self.manager = create_user('mgr@test.com', 'manager')
         self.manager_client = auth_client(self.manager)
 
         self.product = Product.objects.create(

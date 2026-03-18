@@ -73,7 +73,7 @@ class AuthService:
     @staticmethod
     def update_profile(user: User, validated_data: dict) -> User:
         """
-        Обновляет поля профиля пользователя.
+        Обновляет поля профиля пользователя (исключая role — обрабатывается отдельно).
 
         Args:
             user:           объект User
@@ -82,10 +82,38 @@ class AuthService:
         Returns:
             Обновлённый объект User
         """
+        skip_fields = {'role'}
         for field, value in validated_data.items():
-            setattr(user, field, value)
+            if field not in skip_fields:
+                setattr(user, field, value)
         user.save()
         return user
+
+    @staticmethod
+    def check_password(user: User, current_password: str) -> bool:
+        """
+        Проверяет текущий пароль пользователя.
+
+        Args:
+            user:             объект User
+            current_password: текущий пароль в открытом виде
+
+        Returns:
+            True если пароль верный, False иначе
+        """
+        return check_password(current_password, user.password_hash)
+
+    @staticmethod
+    def change_password(user: User, new_password: str) -> None:
+        """
+        Меняет пароль пользователя.
+
+        Args:
+            user:         объект User
+            new_password: новый пароль в открытом виде
+        """
+        user.password_hash = hash_password(new_password)
+        user.save()
 
     @staticmethod
     @transaction.atomic

@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+.env.local
+.env.production
+.env.*.local
+*.log
+.DS_Store
+
+# Testing
+coverage/
+playwright-report/
+test-results/
+playwright/.cache/
+
+# Storybook
+storybook-static/
+
+# Editor
+*.swp
+*.swo
+.idea/
+.vscode/

@@ -53,7 +53,8 @@ class RoleListTests(TestCase):
         """Администратор получает список ролей."""
         response = self.admin_client.get('/api/access/roles/')
         self.assertEqual(response.status_code, 200)
-        self.assertIsInstance(response.data, list)
+        self.assertIn('results', response.data)
+        self.assertIsInstance(response.data['results'], list)
 
     def test_non_admin_cannot_list_roles(self):
         """Обычный пользователь получает 403."""

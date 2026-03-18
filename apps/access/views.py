@@ -22,9 +22,19 @@ class RoleListView(APIView):
 
     @admin_required
     def get(self, request):
-        """Возвращает список всех ролей."""
+        """Возвращает список ролей с пагинацией."""
         roles = RoleService.list_roles()
-        return Response(RoleSerializer(roles, many=True).data)
+        page = int(request.query_params.get('page', 1))
+        page_size = int(request.query_params.get('page_size', 10))
+        start = (page - 1) * page_size
+        end = start + page_size
+        paginated = roles[start:end]
+        return Response({
+            'count': roles.count(),
+            'next': None,
+            'previous': None,
+            'results': RoleSerializer(paginated, many=True).data,
+        })
 
     @admin_required
     def post(self, request):

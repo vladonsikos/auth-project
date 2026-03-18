@@ -6,3 +6,6 @@ __pycache__/
 .git
 .gitignore
 *.md
+frontend/node_modules/
+frontend/dist/
+frontend/.npm/
