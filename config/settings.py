@@ -5,7 +5,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY', default='dev-secret-key')
 DEBUG = config('DEBUG', default=True, cast=bool)
-ALLOWED_HOSTS = ['*']
+
+# В продакшене заменить на конкретный домен: ['yourdomain.com']
+ALLOWED_HOSTS = ['*'] if DEBUG else ['yourdomain.com']
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
@@ -47,7 +49,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 JWT_SECRET = config('JWT_SECRET', default='jwt-dev-secret')
 JWT_EXPIRATION_HOURS = config('JWT_EXPIRATION_HOURS', default=24, cast=int)
 
-CORS_ALLOW_ALL_ORIGINS = True
+# В продакшене заменить на: CORS_ALLOWED_ORIGINS = ['https://yourdomain.com']
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [],

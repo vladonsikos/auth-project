@@ -11,7 +11,7 @@ from django.db import models
 from .serializers import RegisterSerializer, LoginSerializer, UserSerializer, UpdateUserSerializer, CreateUserSerializer
 from .services import AuthService
 from .models import User
-from apps.access.permissions import login_required
+from apps.access.permissions import login_required, admin_required
 
 
 class RegisterView(APIView):
@@ -165,14 +165,8 @@ class DeleteAccountView(APIView):
 class UsersListView(APIView):
     """GET /api/auth/users/ — список пользователей, POST — создание."""
 
-    @login_required
+    @admin_required
     def get(self, request):
-        """
-        Возвращает список пользователей с пагинацией.
-
-        Query params: page, page_size, search, role, is_active
-        Returns: 200 со списком пользователей
-        """
         page = int(request.query_params.get('page', 1))
         page_size = int(request.query_params.get('page_size', 10))
         search = request.query_params.get('search', '')
@@ -208,7 +202,7 @@ class UsersListView(APIView):
             'results': UserSerializer(paginated, many=True).data,
         })
 
-    @login_required
+    @admin_required
     def post(self, request):
         """
         Создаёт нового пользователя.
@@ -227,7 +221,7 @@ class UsersListView(APIView):
 class UserDetailView(APIView):
     """GET/PATCH/DELETE /api/auth/users/{id}/ — детали, обновление, удаление."""
 
-    @login_required
+    @admin_required
     def get(self, request, user_id):
         """Возвращает данные пользователя по ID."""
         try:
@@ -236,7 +230,7 @@ class UserDetailView(APIView):
         except User.DoesNotExist:
             return Response({'detail': 'Пользователь не найден'}, status=status.HTTP_404_NOT_FOUND)
 
-    @login_required
+    @admin_required
     def patch(self, request, user_id):
         """Обновляет пользователя по ID."""
         try:
@@ -264,7 +258,7 @@ class UserDetailView(APIView):
         
         return Response(UserSerializer(user).data)
 
-    @login_required
+    @admin_required
     def delete(self, request, user_id):
         """Удаляет пользователя по ID."""
         try:
@@ -278,7 +272,7 @@ class UserDetailView(APIView):
 class BulkDeleteUsersView(APIView):
     """POST /api/auth/users/bulk_delete/ — массовое удаление пользователей."""
 
-    @login_required
+    @admin_required
     def post(self, request):
         """
         Удаляет пользователей по списку ID.
