@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { BrowserRouter } from 'react-router-dom';
 import { describe, it, expect } from 'vitest';
 
+import { AuthProvider } from '../features/auth';
 import { LoginPage } from '../pages/LoginPage';
 import { ThemeProvider } from '../shared/lib/ThemeProvider';
 import '../shared/config/i18n';
@@ -15,7 +16,9 @@ const createWrapper = () => {
   return ({ children }: { children: React.ReactNode }) => (
     <ThemeProvider>
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>{children}</BrowserRouter>
+        <AuthProvider>
+          <BrowserRouter>{children}</BrowserRouter>
+        </AuthProvider>
       </QueryClientProvider>
     </ThemeProvider>
   );

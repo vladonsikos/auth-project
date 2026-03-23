@@ -96,6 +96,7 @@ export const DataTable = <T extends { id: string | number }>({
         columns={columns}
         rowCount={rowCount}
         loading={loading}
+        disableVirtualization={process.env.NODE_ENV === 'test'}
         paginationMode="server"
         paginationModel={paginationModel}
         onPaginationModelChange={onPaginationModelChange}
