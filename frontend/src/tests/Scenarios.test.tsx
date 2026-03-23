@@ -14,7 +14,14 @@ import '../shared/config/i18n';
 
 // ── Mock useAuth for pages that require auth ──────────────────────────────────
 const mockAdmin = {
-  user: { id: 1, first_name: 'Admin', last_name: 'User', email: 'admin@example.com', is_active: true, roles: [{ id: 1, name: 'admin', description: '' }] },
+  user: {
+    id: 1,
+    first_name: 'Admin',
+    last_name: 'User',
+    email: 'admin@example.com',
+    is_active: true,
+    roles: [{ id: 1, name: 'admin', description: '' }],
+  },
   isAuthenticated: true,
   isLoading: false,
   login: vi.fn(),
@@ -29,29 +36,60 @@ vi.mock('../features/auth/model/useAuth', () => ({
 // ── MSW server ────────────────────────────────────────────────────────────────
 const server = setupServer(
   http.post('/api/auth/login/', async ({ request }) => {
-    const body = await request.json() as { email: string; password: string };
+    const body = (await request.json()) as { email: string; password: string };
     if (body.email === 'admin@example.com' && body.password === 'admin123') {
       return HttpResponse.json({ token: 'tok', expires_at: '', user: mockAdmin.user });
     }
     return HttpResponse.json({ detail: 'Неверный email или пароль.' }, { status: 401 });
   }),
   http.get('/api/auth/profile/', () => HttpResponse.json(mockAdmin.user)),
-  http.get('/api/auth/users/', () => HttpResponse.json({
-    count: 2, next: null, previous: null,
-    results: [
-      { id: 1, first_name: 'Alice', last_name: 'Smith', email: 'alice@example.com', is_active: true, roles: [] },
-      { id: 2, first_name: 'Bob', last_name: 'Jones', email: 'bob@example.com', is_active: false, roles: [] },
-    ],
-  })),
-  http.post('/api/auth/users/', () => HttpResponse.json(
-    { id: 3, first_name: 'New', last_name: 'User', email: 'new@example.com', is_active: true, roles: [] },
-    { status: 201 }
-  )),
+  http.get('/api/auth/users/', () =>
+    HttpResponse.json({
+      count: 2,
+      next: null,
+      previous: null,
+      results: [
+        {
+          id: 1,
+          first_name: 'Alice',
+          last_name: 'Smith',
+          email: 'alice@example.com',
+          is_active: true,
+          roles: [],
+        },
+        {
+          id: 2,
+          first_name: 'Bob',
+          last_name: 'Jones',
+          email: 'bob@example.com',
+          is_active: false,
+          roles: [],
+        },
+      ],
+    })
+  ),
+  http.post('/api/auth/users/', () =>
+    HttpResponse.json(
+      {
+        id: 3,
+        first_name: 'New',
+        last_name: 'User',
+        email: 'new@example.com',
+        is_active: true,
+        roles: [],
+      },
+      { status: 201 }
+    )
+  ),
   http.delete('/api/auth/users/:id/', () => new HttpResponse(null, { status: 204 })),
-  http.get('/api/access/roles/', () => HttpResponse.json({
-    count: 1, next: null, previous: null,
-    results: [{ id: 3, name: 'user', description: '' }],
-  })),
+  http.get('/api/access/roles/', () =>
+    HttpResponse.json({
+      count: 1,
+      next: null,
+      previous: null,
+      results: [{ id: 3, name: 'user', description: '' }],
+    })
+  )
 );
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'bypass' }));
@@ -63,7 +101,13 @@ const wrap = (ui: React.ReactElement, router: 'browser' | 'memory' = 'browser') 
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   const Router = router === 'memory' ? MemoryRouter : BrowserRouter;
   return render(
-    <ThemeProvider><QueryClientProvider client={qc}><AuthProvider><Router>{ui}</Router></AuthProvider></QueryClientProvider></ThemeProvider>
+    <ThemeProvider>
+      <QueryClientProvider client={qc}>
+        <AuthProvider>
+          <Router>{ui}</Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 };
 

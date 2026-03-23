@@ -21,8 +21,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY);
-    if (!token) { setIsLoading(false); return; }
-    axiosInstance.get('/auth/profile/')
+    if (!token) {
+      setIsLoading(false);
+      return;
+    }
+    axiosInstance
+      .get('/auth/profile/')
       .then((res) => setUser(res.data))
       .catch(() => localStorage.removeItem(TOKEN_KEY))
       .finally(() => setIsLoading(false));
@@ -36,7 +40,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const logout = useCallback(async () => {
-    try { await axiosInstance.post('/auth/logout/'); } catch { /* ignore */ }
+    try {
+      await axiosInstance.post('/auth/logout/');
+    } catch {
+      /* ignore */
+    }
     localStorage.removeItem(TOKEN_KEY);
     setUser(null);
   }, []);

@@ -212,17 +212,17 @@ export const RolesPage = () => {
         width: 80,
         sortable: false,
         renderCell: (params) => (
-            <IconButton
-              size="small"
-              onClick={(e) => {
-                e.stopPropagation();
-                handleActionMenuOpen(e, params.row);
-              }}
-              sx={{ p: 0.5 }}
-            >
-              <MoreVertIcon />
-            </IconButton>
-          ),
+          <IconButton
+            size="small"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleActionMenuOpen(e, params.row);
+            }}
+            sx={{ p: 0.5 }}
+          >
+            <MoreVertIcon />
+          </IconButton>
+        ),
       },
     ],
     [t, handleActionMenuOpen]

@@ -12,7 +12,14 @@ import '../shared/config/i18n';
 // Mock useAuth so pages don't redirect
 vi.mock('../features/auth/model/useAuth', () => ({
   useAuth: () => ({
-    user: { id: 1, first_name: 'Admin', last_name: 'User', email: 'admin@example.com', is_active: true, roles: [{ id: 1, name: 'admin' }] },
+    user: {
+      id: 1,
+      first_name: 'Admin',
+      last_name: 'User',
+      email: 'admin@example.com',
+      is_active: true,
+      roles: [{ id: 1, name: 'admin' }],
+    },
     isAuthenticated: true,
     isLoading: false,
     login: vi.fn(),
@@ -45,7 +52,9 @@ describe('UsersPage', () => {
   it('renders Add User button', async () => {
     render(<UsersPage />, { wrapper: createWrapper() });
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: /add user|добавить пользователя/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole('button', { name: /add user|добавить пользователя/i })
+      ).toBeInTheDocument();
     });
   });
 
