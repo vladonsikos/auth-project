@@ -11,6 +11,9 @@ export default defineConfig({
     setupFiles: './src/tests/setup.ts',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: ['**/e2e/**', 'node_modules/**'],
+    env: {
+      VITE_API_URL: 'http://localhost/api',
+    },
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html'],

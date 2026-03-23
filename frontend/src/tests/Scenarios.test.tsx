@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
+import React from 'react';
 import { BrowserRouter, MemoryRouter } from 'react-router-dom';
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -11,6 +12,41 @@ import { LoginPage } from '../pages/LoginPage';
 import { UsersPage } from '../pages/UsersPage';
 import { ThemeProvider } from '../shared/lib/ThemeProvider';
 import '../shared/config/i18n';
+
+// Mock DataGrid — jsdom has no layout engine, rows never render without this
+vi.mock('@mui/x-data-grid', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@mui/x-data-grid')>();
+  return {
+    ...actual,
+    DataGrid: ({
+      rows,
+      columns,
+    }: {
+      rows: Record<string, unknown>[];
+      columns: {
+        field: string;
+        renderCell?: (p: { row: Record<string, unknown> }) => React.ReactNode;
+      }[];
+    }) =>
+      React.createElement(
+        'div',
+        { className: 'MuiDataGrid-root' },
+        rows.map((row) =>
+          React.createElement(
+            'div',
+            { key: String(row.id), className: 'MuiDataGrid-row' },
+            columns.map((col) =>
+              React.createElement(
+                'div',
+                { key: col.field },
+                col.renderCell ? col.renderCell({ row }) : String(row[col.field] ?? '')
+              )
+            )
+          )
+        )
+      ),
+  };
+});
 
 // ── Mock useAuth for pages that require auth ──────────────────────────────────
 const mockAdmin = {
@@ -33,17 +69,19 @@ vi.mock('../features/auth/model/useAuth', () => ({
   AuthProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));
 
+const BASE = 'http://localhost/api';
+
 // ── MSW server ────────────────────────────────────────────────────────────────
 const server = setupServer(
-  http.post('/api/auth/login/', async ({ request }) => {
+  http.post(`${BASE}/auth/login/`, async ({ request }) => {
     const body = (await request.json()) as { email: string; password: string };
     if (body.email === 'admin@example.com' && body.password === 'admin123') {
       return HttpResponse.json({ token: 'tok', expires_at: '', user: mockAdmin.user });
     }
     return HttpResponse.json({ detail: 'Неверный email или пароль.' }, { status: 401 });
   }),
-  http.get('/api/auth/profile/', () => HttpResponse.json(mockAdmin.user)),
-  http.get('/api/auth/users/', () =>
+  http.get(`${BASE}/auth/profile/`, () => HttpResponse.json(mockAdmin.user)),
+  http.get(`${BASE}/auth/users/`, () =>
     HttpResponse.json({
       count: 2,
       next: null,
@@ -68,7 +106,7 @@ const server = setupServer(
       ],
     })
   ),
-  http.post('/api/auth/users/', () =>
+  http.post(`${BASE}/auth/users/`, () =>
     HttpResponse.json(
       {
         id: 3,
@@ -81,8 +119,8 @@ const server = setupServer(
       { status: 201 }
     )
   ),
-  http.delete('/api/auth/users/:id/', () => new HttpResponse(null, { status: 204 })),
-  http.get('/api/access/roles/', () =>
+  http.delete(`${BASE}/auth/users/:id/`, () => new HttpResponse(null, { status: 204 })),
+  http.get(`${BASE}/access/roles/`, () =>
     HttpResponse.json({
       count: 1,
       next: null,
@@ -132,7 +170,7 @@ describe('Login — успешный вход', () => {
 
   it('показывает ошибку при неверных данных', async () => {
     server.use(
-      http.post('/api/auth/login/', () =>
+      http.post(`${BASE}/auth/login/`, () =>
         HttpResponse.json({ detail: 'Неверный email или пароль.' }, { status: 401 })
       )
     );

@@ -4,10 +4,11 @@ import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 import { afterAll, afterEach, beforeAll } from 'vitest';
 
+const BASE = 'http://localhost/api';
+
 const handlers = [
-  // Authentication
-  http.post('/api/auth/login/', () => {
-    return HttpResponse.json({
+  http.post(`${BASE}/auth/login/`, () =>
+    HttpResponse.json({
       token: 'test-token',
       expires_at: new Date().toISOString(),
       user: {
@@ -19,11 +20,11 @@ const handlers = [
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       },
-    });
-  }),
+    })
+  ),
 
-  http.get('/api/auth/profile/', () => {
-    return HttpResponse.json({
+  http.get(`${BASE}/auth/profile/`, () =>
+    HttpResponse.json({
       id: 1,
       first_name: 'Test',
       last_name: 'User',
@@ -31,16 +32,13 @@ const handlers = [
       is_active: true,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    });
-  }),
+    })
+  ),
 
-  http.post('/api/auth/logout/', () => {
-    return HttpResponse.json({ detail: 'Logged out' });
-  }),
+  http.post(`${BASE}/auth/logout/`, () => HttpResponse.json({ detail: 'Logged out' })),
 
-  // Users
-  http.get('/api/auth/users/', () => {
-    return HttpResponse.json({
+  http.get(`${BASE}/auth/users/`, () =>
+    HttpResponse.json({
       count: 2,
       next: null,
       previous: null,
@@ -51,6 +49,7 @@ const handlers = [
           last_name: 'User',
           email: 'admin@example.com',
           is_active: true,
+          roles: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -60,16 +59,16 @@ const handlers = [
           last_name: 'User',
           email: 'user@example.com',
           is_active: true,
+          roles: [],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
       ],
-    });
-  }),
+    })
+  ),
 
-  // Roles
-  http.get('/api/access/roles/', () => {
-    return HttpResponse.json({
+  http.get(`${BASE}/access/roles/`, () =>
+    HttpResponse.json({
       count: 4,
       next: null,
       previous: null,
@@ -79,22 +78,18 @@ const handlers = [
         { id: 3, name: 'user', description: 'Regular User' },
         { id: 4, name: 'guest', description: 'Guest User' },
       ],
-    });
-  }),
+    })
+  ),
 
-  // Business Elements
-  http.get('/api/access/elements/', () => {
-    return HttpResponse.json([
+  http.get(`${BASE}/access/elements/`, () =>
+    HttpResponse.json([
       { id: 1, name: 'products', description: 'Products' },
       { id: 2, name: 'orders', description: 'Orders' },
       { id: 3, name: 'shops', description: 'Shops' },
-    ]);
-  }),
+    ])
+  ),
 
-  // Access Rules
-  http.get('/api/access/rules/', () => {
-    return HttpResponse.json([]);
-  }),
+  http.get(`${BASE}/access/rules/`, () => HttpResponse.json([])),
 ];
 
 const server = setupServer(...handlers);
